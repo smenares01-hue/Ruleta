@@ -1,10 +1,14 @@
+package Vista;
+
+import Controlador.RuletaController;
+import Controlador.SessionController;
+
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class VentanaLogin {
-    public static final List<Usuario> USUARIOS = new ArrayList<>();
+    private final SessionController session;
+    private final RuletaController ruletaController;
 
     private final JFrame frame = new JFrame("Login - Casino Black Cat");
     private final JLabel lblUsuario = new JLabel("Usuario:");
@@ -14,10 +18,9 @@ public class VentanaLogin {
     private final JButton btnIngresar = new JButton("Ingresar");
     private final JButton btnRegistrar = new JButton("Registrarse");
 
-    public VentanaLogin() {
-        if (USUARIOS.isEmpty()) {
-            USUARIOS.add(new Usuario("admin", "1234", "Don Donnie"));
-        }
+    public VentanaLogin(SessionController session, RuletaController ruletaController) {
+        this.session = session;
+        this.ruletaController = ruletaController;
 
         frame.setLayout(new GridLayout(4, 2, 10, 10));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -29,45 +32,32 @@ public class VentanaLogin {
         frame.add(btnIngresar);
         frame.add(btnRegistrar);
 
-        btnIngresar.addActionListener(e -> login());
+        btnIngresar.addActionListener(e -> intentarLogin());
         btnRegistrar.addActionListener(e -> abrirRegistro());
 
         frame.pack();
     }
 
     public void mostrarVentana() {
-        frame.setLocationRelativeTo(null); // Centra la ventana
+        frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
 
-    private void login() {
+    private void intentarLogin() {
         String user = txtUsuario.getText().trim();
         String pass = new String(txtClave.getPassword());
 
-        String nombreUsuario = validarCredenciales(user, pass);
-
-        if (!nombreUsuario.isEmpty()) {
-            JOptionPane.showMessageDialog(frame, "¡Bienvenido/a " + nombreUsuario + "!", "Acceso Concedido", JOptionPane.INFORMATION_MESSAGE);
-            frame.dispose(); // Cierra la ventana de login
-
-            Ruleta.menu();
+        if (session.iniciarSesion(user, pass)) {
+            JOptionPane.showMessageDialog(frame, "¡Bienvenido/a " + session.getNombreUsuario() + "!", "Acceso Concedido", JOptionPane.INFORMATION_MESSAGE);
+            frame.dispose();
+            new VentanaMenu(session, ruletaController).mostrarVentana();
         } else {
             JOptionPane.showMessageDialog(frame, "Usuario o contraseña incorrectos.", "Error de Autenticación", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private String validarCredenciales(String u, String p) {
-        for (Usuario usuario : USUARIOS) {
-            if (usuario.validarCredenciales(u, p)) {
-                return usuario.getNombre();
-            }
-        }
-        return "";
-    }
-
     private void abrirRegistro() {
         frame.dispose();
-        VentanaRegistro ventanaRegistro = new VentanaRegistro();
-        ventanaRegistro.mostrarVentana();
+        new VentanaRegistro(session, ruletaController).mostrarVentana();
     }
 }
